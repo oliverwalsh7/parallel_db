@@ -21,6 +21,4 @@ class Database{
     bool get_task_parallel(string table, void* condistions, void* sort, bool ascend = true);
     bool get_task_data(string table, void* condistions, void* sort, bool ascend = true);
     
-
-
 }
