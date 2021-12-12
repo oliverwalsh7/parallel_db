@@ -79,7 +79,7 @@ class Seq_Database {
             //cout << x.second.bucket_count();
             for(auto y : x.second){ // middle loop of records
                 for(auto z : y){ // inner loop of fields
-                    cout << z.second << " ";
+                    cout << z.second;
                 }
                 cout << endl;
             }

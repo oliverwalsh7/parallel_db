@@ -33,8 +33,14 @@ bool testBulkInsert(Seq_Database* DB) {
         keys->push_back(s);
         unordered_map<string, string> *ins_row = new unordered_map<string, string>();
         string rd = "raw-data";
+
+
         (*ins_row)[rd] = *it;
-        ins_vec->push_back(*ins_row);        
+
+
+        ins_vec->push_back(*ins_row);   
+
+        // cout << ins_vec->id << endl;
     }
     DB->insert("games", ins_vec->size(), *keys, *ins_vec);
     DB->printDB();
