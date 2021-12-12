@@ -20,7 +20,7 @@ class Seq_Database {
     // Outer Level Hashmap of tables
     //   Second Level Hashmap of records in "table"
     //     Third Level Hashmap where each map is a record
-    unordered_map<string, unordered_map<string,unordered_map<string,string>>>* DB;
+    unordered_map<string, vector<unordered_map<string,string>>>* DB;
     //unordered_map<string, unordered_map<string, unordered_map<string,void*>>>* DB;
     //string sortKey;
 
@@ -52,38 +52,42 @@ class Seq_Database {
     public:
 
     Seq_Database(){
-        DB = new unordered_map<string, unordered_map<string,unordered_map<string,string>>>();
+        DB = new unordered_map<string, vector<unordered_map<string,string>>>();
         //sortKey = "";
     }
 
     //Change to bool/int for failed insertions?
     void insert(string table, int num, vector<string> keys, vector<unordered_map<string,string>> records){
-        unordered_map<string,unordered_map<string, unordered_map<string,string>>> database = *DB;
+        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
         try {
             DB->at(table);
         } catch (const std::out_of_range& oor) {
-            unordered_map<string, unordered_map<string,string>>* x = new unordered_map<string, unordered_map<string,string>>();
+            vector<unordered_map<string,string>>* x = new vector<unordered_map<string,string>>();
             database[table] = *x;
             cout << "Table doesnt exist" << endl;
             //DB->insert(std::make_pair<string, unordered_map<string, void*>(table, new unordered_map<string, void*>());
         }
         for(int i = 0; i < num; i++){
-            database[table][keys[i]] = records[i];
+            database[table].push_back(records[i]);
+            string a = "raw-data";
+            cout<<i<<": ";
+            //string s = records[i].at(s);
+            //cout << s <<endl;
         }
         for(auto x : database){ // outer loop of tables
             cout << x.second.size() << endl;
-            cout << x.second.bucket_count();
+            //cout << x.second.bucket_count();
             for(auto y : x.second){ // middle loop of records
-                for(auto z : y.second){ // inner loop of fields
+                for(auto z : y){ // inner loop of fields
                     cout << z.second << " ";
                 }
-                //cout << endl;
+                cout << endl;
             }
         }
         *DB = database;
 
     }
-
+/*
     // remove specific records
     int remove(string table, vector<string> keys){
         int failed = 0;
@@ -202,14 +206,14 @@ class Seq_Database {
     }*/
 
     void printDB(){
-        unordered_map<string,unordered_map<string, unordered_map<string,string>>> database = *DB;
+        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
         cout << "print all the rows in DB" << endl;
         cout << database.size() << endl;
         for(auto x : database){ // outer loop of tables
             cout << x.second.size() << endl;
-            cout << x.second.bucket_count();
+            //cout << x.second.bucket_count();
             for(auto y : x.second){ // middle loop of records
-                for(auto z : y.second){ // inner loop of fields
+                for(auto z : y){ // inner loop of fields
                     // cout << z.second << " ";
                 }
                 //cout << endl;
