@@ -74,21 +74,39 @@ class Seq_Database {
 
     }
 
-    /*// remove based on conditions
-    int remove(string table, int numCond, vector<pair<string,string>> conditions){
+    // remove based on conditions
+    int remove(string table, vector<pair<string,string>> conditions){
         int count = 0;
-        vector<string> toRemove;
-        unordered_map<string,unordered_map<string, unordered_map<string,string>>> database = *DB;
-        for(auto x : database[table]){
+        vector<unordered_map<string, string>>* toRemove = new vector<unordered_map<string, string>>();
+        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
+        for(auto it = database[table].begin(); it != database[table].end(); it++) { // for every unordered_map (record) in the vector representing "table"
             bool rem = true;
-            for(int i = 0; i < numCond; i++){
-
-                auto field = ((unordered_map<string, string>)x.second)[conditions[i].first];
-                rem = rem && field == conditions[i].second; // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
+            for(int i = 0; i < conditions.size(); i++) { // check each condition
+                string field = (*it)[conditions[i].first];
+                rem = rem && (field.compare(conditions[i].second) == 0); // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
             }
-            if(rem){
+            if(rem) {
                 count++;
-                toRemove.push_back(x.first);
+                it = database[table].erase(it);
+                it--;
+            }
+        }
+        *DB = database;
+        return count;
+    } 
+    /*int remove(string table, vector<pair<string,string>> conditions){
+        int count = 0;
+        vector<unordered_map<string, string>>* finalQry = new vector<unordered_map<string, string>>();
+        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
+        for(auto x : database[table]) { // for every unordered_map (record) in the vector representing "table"
+            bool add = true;
+            for(int i = 0; i < conditions.size(); i++) { // check each condition
+                string field = ((unordered_map<string, string>)x)[conditions[i].first];
+                add = add && (field.compare(conditions[i].second) == 0); // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
+            }
+            if(add) {
+                count++;
+                finalQry->push_back(x);
             }
         }
         return count - remove(table, toRemove);
