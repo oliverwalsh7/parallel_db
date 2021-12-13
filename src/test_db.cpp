@@ -14,7 +14,7 @@ using namespace std;
 
 vector<unordered_map<string,string>> segmentData() {
    
-    std::ifstream file("../data/meta.csv"); // import csv
+    std::ifstream file("../data/nfl-0.csv"); // import csv
     vector<string> games; // vec of games
     string s = ""; // for tracking label rows
     char delim = '\n'; // delimiter by newline
@@ -64,57 +64,57 @@ bool testBulkInsert(Seq_Database* DB) {
 }
 
 
-bool testGet(Seq_Database* DB, pair<string,string> c1) { // c1 = criteria
-    vector<pair<string, string>>* conds = new vector<pair<string, string>>();
-    vector<pair<string, string>>* conds2 = new vector<pair<string, string>>();
-    conds->push_back(c1);
-    conds2->push_back(c2);
-    vector<unordered_map<string, string>> results = DB->get("games", *conds);
+// bool testGet(Seq_Database* DB, pair<string,string> c1) { // c1 = criteria
+//     vector<pair<string, string>>* conds = new vector<pair<string, string>>();
+//     vector<pair<string, string>>* conds2 = new vector<pair<string, string>>();
+//     conds->push_back(c1);
+//     vector<unordered_map<string, string>> results = DB->get("games", *conds);
+//     for (unordered_map<string,string> x : results){
+//         for(auto y : x){
+//             cout << y.first << ": " << y.second << ", ";
+//         }
+//         cout << endl << endl;
+//     }
+
+//     results = DB->get("games", *conds);
+//     for (unordered_map<string,string> x : results){
+//         for(auto y : x){
+//             cout <<"Post- "<< y.first << ": " << y.second << ", ";
+//         }
+//         cout << endl << endl;
+//     }
+//     return true;
+// }
+
+bool testGet(Seq_Database* DB) { // c1, c2 = criteria
+    tuple<string, string, int> home = make_tuple<string, string>("team_home", "New England Patriots", 0);
+    tuple<string, string, int> away = make_tuple<string, string>("team_away", "Buffalo Bills", 0);
+    tuple<string, string, int> score = make_tuple<string, string>("score_home", "14",1);
+    tuple<string, string, int> score2 = make_tuple<string, string>("score_home", "17", -1);
+    vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
+    vector<tuple<string, string, int>>* conds2 = new vector<tuple<string, string, int>>();
+    vector<tuple<string, string, int>>* conds3 = new vector<tuple<string, string, int>>();
+
+    conds->push_back(home);
+    conds2->push_back(away);
+    conds3->push_back(score);
+    conds3->push_back(score2);
+    vector<unordered_map<string, string>> results = DB->get("games", *conds3);
     for (unordered_map<string,string> x : results){
         for(auto y : x){
             cout << y.first << ": " << y.second << ", ";
         }
         cout << endl << endl;
     }
-
-    results = DB->get("games", *conds);
-    for (unordered_map<string,string> x : results){
-        for(auto y : x){
-            cout <<"Post- "<< y.first << ": " << y.second << ", ";
-        }
-        cout << endl << endl;
-    }
-    return true;
-}
-
-bool testGet(Seq_Database* DB, pair<string,string> c1, pair<string,string> c2) { // c1, c2 = criteria
-    vector<pair<string, string>>* conds = new vector<pair<string, string>>();
-    vector<pair<string, string>>* conds2 = new vector<pair<string, string>>();
-    conds->push_back(c1);
-    conds2->push_back(c2);
-    vector<unordered_map<string, string>> results = DB->get("games", *conds);
-    for (unordered_map<string,string> x : results){
-        for(auto y : x){
-            cout << y.first << ": " << y.second << ", ";
-        }
-        cout << endl << endl;
-    }
-
-    results = DB->get("games", *conds);
-    for (unordered_map<string,string> x : results){
-        for(auto y : x){
-            cout <<"Post- "<< y.first << ": " << y.second << ", ";
-        }
-        cout << endl << endl;
-    }
+    cout << "Total records: " << results.size() << endl;
     return true;
 }
 
 bool testRemove(Seq_Database *DB, pair<string,string> c1) { // singular remove
     vector<pair<string, string>>* conds = new vector<pair<string, string>>();
     conds->push_back(c1);
-    conds2->push_back(c2);
     DB->remove("games", *conds);
+    return true;
 }
 
 int main() {
@@ -125,15 +125,14 @@ int main() {
     // -------------------
 
     // ----- get ---------
-    pair<string, string> home = make_pair<string, string>("team_home", "Pittsburgh Steelers");
-    pair<string, string> away = make_pair<string, string>("team_away", "Buffalo Bills");
-    testGet(DB, home, away);
+    testGet(DB);
     // -------------------
 
     // ----- remove ------
-    pair<string, string> rm = make_pair<string, string>("team_home", "Pittsburgh Steelers");
-    testRemove(DB, rm)
-    testGet(DB, home, away);
+    // pair<string, string> rm = make_pair<string, string>("score_home", "10");
+    // testRemove(DB, rm);
+    // cout << "POST:" << endl;
+    // testGet(DB);
     // -------------------
 
 

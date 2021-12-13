@@ -53,7 +53,6 @@ class Seq_Database {
 
     Seq_Database(){
         DB = new unordered_map<string, vector<unordered_map<string,string>>>();
-        //sortKey = "";
     }
 
     //Change to bool/int for failed insertions?
@@ -65,7 +64,6 @@ class Seq_Database {
             vector<unordered_map<string,string>>* x = new vector<unordered_map<string,string>>();
             database[table] = *x;
             cout << "Table doesnt exist" << endl;
-            //DB->insert(std::make_pair<string, unordered_map<string, void*>(table, new unordered_map<string, void*>());
         }
         for(int i = 0; i < num; i++){
             database[table].push_back(records[i]);
@@ -94,34 +92,28 @@ class Seq_Database {
         *DB = database;
         return count;
     } 
-    /*int remove(string table, vector<pair<string,string>> conditions){
-        int count = 0;
-        vector<unordered_map<string, string>>* finalQry = new vector<unordered_map<string, string>>();
-        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
-        for(auto x : database[table]) { // for every unordered_map (record) in the vector representing "table"
-            bool add = true;
-            for(int i = 0; i < conditions.size(); i++) { // check each condition
-                string field = ((unordered_map<string, string>)x)[conditions[i].first];
-                add = add && (field.compare(conditions[i].second) == 0); // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
-            }
-            if(add) {
-                count++;
-                finalQry->push_back(x);
-            }
-        }
-        return count - remove(table, toRemove);
-    } */
 
     // Qry without sort
-    vector<unordered_map<string,string>> get(string table, vector<pair<string,string>> conditions){
+    vector<unordered_map<string,string>> get(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         vector<unordered_map<string, string>>* finalQry = new vector<unordered_map<string, string>>();
         unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
         for(auto x : database[table]) { // for every unordered_map (record) in the vector representing "table"
             bool add = true;
             for(int i = 0; i < conditions.size(); i++) { // check each condition
-                string field = ((unordered_map<string, string>)x)[conditions[i].first];
-                add = add && (field.compare(conditions[i].second) == 0); // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
+                string k = std::get<0>(conditions[i]);
+                string field = ((unordered_map<string, string>)x)[k];
+                if(std::get<2>(conditions[i])<0){
+                    //cout << "less" << endl;
+                    add = add && (field.compare(std::get<1>(conditions[i])) < 0); 
+                } else if(std::get<2>(conditions[i])>0){
+                    //cout << "greater" << endl;
+                    //cout << "Field: " << field << " Cond<1>: " << std::get<1>(conditions[i]) << " Compare: " << field.compare(std::get<1>(conditions[i])) << endl;
+                    add = add && (field.compare(std::get<1>(conditions[i])) > 0);
+                } else {
+                    add = add && (field.compare(std::get<1>(conditions[i])) == 0);
+                }
+
             }
             if(add) {
                 count++;
