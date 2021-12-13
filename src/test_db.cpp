@@ -11,6 +11,8 @@
 #include <valarray>
 #include "SequentialDB.cpp"
 #include <random>
+#include <tbb/tbb.h>
+#include "DataParallelDB.cpp"
 
 using namespace std;
 
@@ -57,9 +59,10 @@ vector<unordered_map<string,string>> segmentData() {
     return *ins_vec;
 }
 
-bool populateDB(Seq_Database* DB) {
+bool populateDB(DP_Database* DB) {
     vector<string> *keys = new vector<string>(); // list keys
     vector<unordered_map<string,string>> ins_vec = segmentData();
+    cout << "inserting" << endl;
     DB->insert("games", ins_vec);
     return true;
 }
@@ -97,6 +100,36 @@ bool testGet(Seq_Database* DB) { // c1, c2 = criteria
         cout << endl << endl;
     }
     cout << "Total records: " << results.size() << endl;
+    return true;
+}
+
+bool testGet(DP_Database* DB) { // c1, c2 = criteria
+    chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+    tuple<string, string, int> home = make_tuple<string, string>("team_home", "New England Patriots", 0);
+    tuple<string, string, int> away = make_tuple<string, string>("team_away", "Buffalo Bills", 0);
+    tuple<string, string, int> score = make_tuple<string, string>("score_home", "14",1);
+    tuple<string, string, int> score2 = make_tuple<string, string>("score_home", "17", -1);
+    vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
+    vector<tuple<string, string, int>>* conds2 = new vector<tuple<string, string, int>>();
+    vector<tuple<string, string, int>>* conds3 = new vector<tuple<string, string, int>>();
+
+    conds->push_back(home);
+    conds2->push_back(away);
+    conds3->push_back(score);
+    conds3->push_back(score2);
+    tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds3);
+    for (unordered_map<string,string> x : results){
+        for(auto y : x){
+            cout << y.first << ": " << y.second << ", ";
+        }
+        cout << endl << endl;
+    }
+    cout << "Total records: " << results.size() << endl;
+
+    chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+  
     return true;
 }
 
@@ -144,8 +177,11 @@ bool testRigorous(Seq_Database* DB, int iters) {
 }
 
 int main() {
-    Seq_Database* DB = new Seq_Database(); // testing sequential
-    populateDB(DB);
+    // Seq_Database* DB = new Seq_Database(); // testing sequential
+    DP_Database* dpDB = new DP_Database();
+    populateDB(dpDB);
+
+    testGet(dpDB);
 
     // ----- insert ------
     // test random insert
@@ -162,9 +198,8 @@ int main() {
     // -------------------
 
     // ----- BATCH OPS ---
-    testRigorous(DB, 50);
+    // testRigorous(DB, 50);
     // -------------------
-
 
     exit(EXIT_SUCCESS);
 }

@@ -28,17 +28,20 @@
 # *****************************************************
 # Variables to control Makefile operation
 CC = g++
-CFLAGS = -O3 -std=c++11 -lpthread -L -fgnu-tm -ltbb
+CXXFLAGS = -O3 -std=c++11 -lpthread -L -fgnu-tm -ltbb
 LDFLAGS = -fgnu-tmld -lzlib --verbose
 # ****************************************************
 # Targets needed to bring the executable up to date
 test_db: test_db.o SequentialDB.o DataParallelDB.o
-	$(CC) $(CFLAGS) -o test_db test_db.o SequentialDB.o DataParallelDB.o
+	$(CC) $(CXXFLAGS) -o test_db test_db.o SequentialDB.o DataParallelDB.o
 
 # The main.o target can be written more simply
 test_db.o: test_db.cpp SequentialDB.cpp  DataParallelDB.cpp
-	$(CC) $(CFLAGS) -c test_db.cpp 
+	$(CC) $(CXXFLAGS) -c test_db.cpp 
 
 SequentialDB.o: SequentialDB.cpp
 
 DataParallelDB.o: DataParallelDB.cpp
+
+clean:
+	rm -f test_db.o test_db DataParallelDB.o SequentialDB.o
