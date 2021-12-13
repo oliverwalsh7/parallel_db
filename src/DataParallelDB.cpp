@@ -19,7 +19,7 @@ class DP_Database{
         DB = new unordered_map<string, tbb::concurrent_vector<unordered_map<string,string>>>();
     }
 
-    void insert(string table, int num, vector<string> keys, vector<unordered_map<string,string>> records){
+    void insert(string table, vector<unordered_map<string,string>> records){
         unordered_map<string,tbb::concurrent_vector<unordered_map<string,string>>> database = *DB;
         try {
             DB->at(table);
