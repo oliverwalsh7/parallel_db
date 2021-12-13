@@ -55,8 +55,7 @@ class Seq_Database {
         DB = new unordered_map<string, vector<unordered_map<string,string>>>();
     }
 
-    //Change to bool/int for failed insertions?
-    void insert(string table, int num, vector<string> keys, vector<unordered_map<string,string>> records){
+    void insert(string table, vector<unordered_map<string,string>> records){
         unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
         try {
             DB->at(table);
@@ -65,7 +64,7 @@ class Seq_Database {
             database[table] = *x;
             cout << "Table doesnt exist" << endl;
         }
-        for(int i = 0; i < num; i++){
+        for(int i = 0; i < records.size(); i++){
             database[table].push_back(records[i]);
         }
         *DB = database;
@@ -73,15 +72,22 @@ class Seq_Database {
     }
 
     // remove based on conditions
-    int remove(string table, vector<pair<string,string>> conditions){
+    int remove(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         vector<unordered_map<string, string>>* toRemove = new vector<unordered_map<string, string>>();
         unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
         for(auto it = database[table].begin(); it != database[table].end(); it++) { // for every unordered_map (record) in the vector representing "table"
             bool rem = true;
             for(int i = 0; i < conditions.size(); i++) { // check each condition
-                string field = (*it)[conditions[i].first];
-                rem = rem && (field.compare(conditions[i].second) == 0); // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
+                string k = std::get<0>(conditions[i]);
+                string field = (*it)[k];
+                if(std::get<2>(conditions[i])<0){
+                    rem = rem && (field.compare(std::get<1>(conditions[i])) < 0); 
+                } else if(std::get<2>(conditions[i])>0){
+                    rem = rem && (field.compare(std::get<1>(conditions[i])) > 0);
+                } else {
+                    rem = rem && (field.compare(std::get<1>(conditions[i])) == 0);
+                }            
             }
             if(rem) {
                 count++;
@@ -104,11 +110,8 @@ class Seq_Database {
                 string k = std::get<0>(conditions[i]);
                 string field = ((unordered_map<string, string>)x)[k];
                 if(std::get<2>(conditions[i])<0){
-                    //cout << "less" << endl;
                     add = add && (field.compare(std::get<1>(conditions[i])) < 0); 
                 } else if(std::get<2>(conditions[i])>0){
-                    //cout << "greater" << endl;
-                    //cout << "Field: " << field << " Cond<1>: " << std::get<1>(conditions[i]) << " Compare: " << field.compare(std::get<1>(conditions[i])) << endl;
                     add = add && (field.compare(std::get<1>(conditions[i])) > 0);
                 } else {
                     add = add && (field.compare(std::get<1>(conditions[i])) == 0);

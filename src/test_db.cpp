@@ -8,7 +8,9 @@
 #include <map>
 #include <unordered_map>
 #include <chrono>
+#include <valarray>
 #include "SequentialDB.cpp"
+#include <random>
 
 using namespace std;
 
@@ -55,36 +57,24 @@ vector<unordered_map<string,string>> segmentData() {
     return *ins_vec;
 }
 
-bool testBulkInsert(Seq_Database* DB) {
+bool populateDB(Seq_Database* DB) {
     vector<string> *keys = new vector<string>(); // list keys
     vector<unordered_map<string,string>> ins_vec = segmentData();
-    DB->insert("games", ins_vec.size(), *keys, ins_vec);
-    // DB->printDB();
+    DB->insert("games", ins_vec);
     return true;
 }
 
-
-// bool testGet(Seq_Database* DB, pair<string,string> c1) { // c1 = criteria
-//     vector<pair<string, string>>* conds = new vector<pair<string, string>>();
-//     vector<pair<string, string>>* conds2 = new vector<pair<string, string>>();
-//     conds->push_back(c1);
-//     vector<unordered_map<string, string>> results = DB->get("games", *conds);
-//     for (unordered_map<string,string> x : results){
-//         for(auto y : x){
-//             cout << y.first << ": " << y.second << ", ";
-//         }
-//         cout << endl << endl;
-//     }
-
-//     results = DB->get("games", *conds);
-//     for (unordered_map<string,string> x : results){
-//         for(auto y : x){
-//             cout <<"Post- "<< y.first << ": " << y.second << ", ";
-//         }
-//         cout << endl << endl;
-//     }
-//     return true;
-// }
+bool testInsert(Seq_Database* DB, int range) { // insert one record
+    vector<string> *keys = new vector<string>(); // list keys
+    vector<unordered_map<string,string>> ins_vec = segmentData();
+    vector<tuple<string,string,int>> *empt = new vector<tuple<string,string,int>>();
+    vector<unordered_map<string,string>> res1 = DB->get("games", *empt);
+    DB->insert("games", ins_vec);
+    vector<unordered_map<string,string>> res2 = DB->get("games", *empt);
+    cout << res1.size() << endl;
+    cout << res2.size() << endl;
+    return true;
+}
 
 bool testGet(Seq_Database* DB) { // c1, c2 = criteria
     tuple<string, string, int> home = make_tuple<string, string>("team_home", "New England Patriots", 0);
@@ -110,31 +100,87 @@ bool testGet(Seq_Database* DB) { // c1, c2 = criteria
     return true;
 }
 
-bool testRemove(Seq_Database *DB, pair<string,string> c1) { // singular remove
-    vector<pair<string, string>>* conds = new vector<pair<string, string>>();
+bool testRemove(Seq_Database *DB, tuple<string,string, int> c1) { // singular remove
+    vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
     conds->push_back(c1);
     DB->remove("games", *conds);
+    cout << "POST:" << endl;
+    vector<unordered_map<string, string>> results = DB->get("games", *conds);
+    for (unordered_map<string,string> x : results){
+        for(auto y : x){
+            cout << y.first << ": " << y.second << ", ";
+        }
+        cout << endl << endl;
+    }
+    return true;
+}
+
+vector<unordered_map<string,string>> getRecords(Seq_Database* DB, int range) {
+    random_device rd; 
+    mt19937 gen(rd()); 
+    uniform_int_distribution<> distr(1, 500);
+    vector<unordered_map<string,string>> ins_vec = segmentData();
+    int rand_val = distr(gen);
+    vector<unordered_map<string,string>> sliced_vec = vector<unordered_map<string,string>>((ins_vec.begin() + rand_val), (ins_vec.begin() + rand_val + range));
+    return sliced_vec;
+}
+
+bool testRigorous(Seq_Database* DB, int iters) {
+    chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    // // test 250 inserts
+    // testInsert(DB, 50);
+    // testInsert(DB, 50);
+    // testInsert(DB, 50);
+    // testInsert(DB, 50);
+    // testInsert(DB, 50);
+    
+    // tuple<string, string, int> rm1 = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
+    // tuple<string, string, int> rm2 = make_tuple<string, string, int>("team_home", "Philadelphia Eagles", 0);
+    // tuple<string, string, int> rm3 = make_tuple<string, string, int>("team_home", "Miami Dolphins", 0);
+    // tuple<string, string, int> rm4 = make_tuple<string, string, int>("team_home", "Houston Oilers", 0);
+
+    // // test removes
+    // testRemove(DB, rm1);
+    // testRemove(DB, rm2);
+    // testRemove(DB, rm3);
+    // testRemove(DB, rm4);
+
+    vector<unordered_map<string,string>> rand_rows = getRecords(DB, 50);
+
+    for( int i = 0; i < iters; i++ ) {
+        cout << i << endl;
+        DB->insert("games", rand_rows);
+    }
+
+    // test GET
+    testGet(DB);
+    chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+  
     return true;
 }
 
 int main() {
     Seq_Database* DB = new Seq_Database(); // testing sequential
+    populateDB(DB);
 
     // ----- insert ------
-    testBulkInsert(DB);
+    // test random insert
+    // testInsert(DB, 50);
     // -------------------
 
     // ----- get ---------
-    testGet(DB);
+    //testGet(DB);
     // -------------------
 
     // ----- remove ------
-    // pair<string, string> rm = make_pair<string, string>("score_home", "10");
+    // tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
     // testRemove(DB, rm);
-    // cout << "POST:" << endl;
-    // testGet(DB);
     // -------------------
 
+    // ----- BATCH OPS ---
+    testRigorous(DB, 50);
+    // -------------------
 
 
     exit(EXIT_SUCCESS);
