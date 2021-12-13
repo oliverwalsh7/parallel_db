@@ -127,23 +127,6 @@ vector<unordered_map<string,string>> getRecords(Seq_Database* DB, int range) {
 
 bool testRigorous(Seq_Database* DB, int iters) {
     chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    // // test 250 inserts
-    // testInsert(DB, 50);
-    // testInsert(DB, 50);
-    // testInsert(DB, 50);
-    // testInsert(DB, 50);
-    // testInsert(DB, 50);
-    
-    // tuple<string, string, int> rm1 = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
-    // tuple<string, string, int> rm2 = make_tuple<string, string, int>("team_home", "Philadelphia Eagles", 0);
-    // tuple<string, string, int> rm3 = make_tuple<string, string, int>("team_home", "Miami Dolphins", 0);
-    // tuple<string, string, int> rm4 = make_tuple<string, string, int>("team_home", "Houston Oilers", 0);
-
-    // // test removes
-    // testRemove(DB, rm1);
-    // testRemove(DB, rm2);
-    // testRemove(DB, rm3);
-    // testRemove(DB, rm4);
 
     vector<unordered_map<string,string>> rand_rows = getRecords(DB, 50);
 
