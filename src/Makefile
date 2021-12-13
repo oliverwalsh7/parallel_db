@@ -36,7 +36,9 @@ test_db: test_db.o SequentialDB.o DataParallelDB.o
 	$(CC) $(CFLAGS) -o test_db test_db.o SequentialDB.o DataParallelDB.o
 
 # The main.o target can be written more simply
-test_db.o: test_db.cpp SequentialDB.cpp 
+test_db.o: test_db.cpp SequentialDB.cpp  DataParallelDB.cpp
 	$(CC) $(CFLAGS) -c test_db.cpp 
 
 SequentialDB.o: SequentialDB.cpp
+
+DataParallelDB.o: DataParallelDB.cpp
