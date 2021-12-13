@@ -69,38 +69,12 @@ class Seq_Database {
         }
         for(int i = 0; i < num; i++){
             database[table].push_back(records[i]);
-            string a = "raw-data";
-            cout<<i<<": ";
-            //string s = records[i].at(s);
-            //cout << s <<endl;
-        }
-        for(auto x : database){ // outer loop of tables
-            cout << x.second.size() << endl;
-            //cout << x.second.bucket_count();
-            for(auto y : x.second){ // middle loop of records
-                for(auto z : y){ // inner loop of fields
-                    cout << z.second;
-                }
-                cout << endl;
-            }
         }
         *DB = database;
 
     }
-/*
-    // remove specific records
-    int remove(string table, vector<string> keys){
-        int failed = 0;
-        unordered_map<string,unordered_map<string, unordered_map<string,string>>> database = *DB;
-        for(int i = 0; i < keys.size(); i++){
-            if(!database[table].erase(keys[i])){
-                failed++;
-            }
-        }
-        return failed;
-    }
 
-    // remove based on conditions
+    /*// remove based on conditions
     int remove(string table, int numCond, vector<pair<string,string>> conditions){
         int count = 0;
         vector<string> toRemove;
@@ -108,11 +82,7 @@ class Seq_Database {
         for(auto x : database[table]){
             bool rem = true;
             for(int i = 0; i < numCond; i++){
-                //unordered_map<string,void*>* y = (unordered_map<string,void*>) x.second;
-                // void* y = (.second;
-                // auto a = ((unordered_map<string,void*>)x.second).at(conditions[i].first);
-                
-                //unordered_map<string, void*> Y = *((unordered_map<string, void*>*) B);
+
                 auto field = ((unordered_map<string, string>)x.second)[conditions[i].first];
                 rem = rem && field == conditions[i].second; // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
             }
@@ -122,22 +92,22 @@ class Seq_Database {
             }
         }
         return count - remove(table, toRemove);
-    }
+    } */
 
     // Qry without sort
     vector<unordered_map<string,string>> get(string table, vector<pair<string,string>> conditions){
         int count = 0;
         vector<unordered_map<string, string>>* finalQry = new vector<unordered_map<string, string>>();
-        unordered_map<string,unordered_map<string, unordered_map<string,string>>> database = *DB;
-        for(auto x : database[table]) {
+        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
+        for(auto x : database[table]) { // for every unordered_map (record) in the vector representing "table"
             bool add = true;
-            for(int i = 0; i < conditions.size(); i++) {
-                auto field = ((unordered_map<string, string>)x.second)[conditions[i].first];
-                add = add && field == conditions[i].second; // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
+            for(int i = 0; i < conditions.size(); i++) { // check each condition
+                string field = ((unordered_map<string, string>)x)[conditions[i].first];
+                add = add && (field.compare(conditions[i].second) == 0); // THIS IS NOT RIGHT, NEED TO CASTE TO PROPER TYPES THEN DEREFERENCE
             }
             if(add) {
                 count++;
-                finalQry->push_back(x.second);
+                finalQry->push_back(x);
             }
         }
         return *finalQry;
@@ -214,9 +184,9 @@ class Seq_Database {
             //cout << x.second.bucket_count();
             for(auto y : x.second){ // middle loop of records
                 for(auto z : y){ // inner loop of fields
-                    // cout << z.second << " ";
+                    cout << z.second << " ";
                 }
-                //cout << endl;
+                cout << endl<< endl;
             }
         }
     }
