@@ -72,7 +72,6 @@ class Seq_Database {
     // remove based on conditions
     int remove(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
-        vector<unordered_map<string, string>>* toRemove = new vector<unordered_map<string, string>>();
         for(auto it = (*DB)[table].begin(); it != (*DB)[table].end(); it++) { // for every unordered_map (record) in the vector representing "table"
             bool rem = true;
             for(int i = 0; i < conditions.size(); i++) { // check each condition

@@ -96,7 +96,7 @@ class DP_Database{
                 }
             }
         });
-        (*DB)[table] = *updated_table;
+        (*DB)[table].swap(*updated_table);
         return count;
     } 
     
