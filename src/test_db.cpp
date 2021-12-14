@@ -111,6 +111,27 @@ int testInsert(Seq_Database* DB, int range) { // insert one record
     return int(ms);
 }
 
+int testInsert(DP_Database* DB, int range) { // insert one record
+
+    vector<string> *keys = new vector<string>(); // list keys
+    vector<unordered_map<string,string>> ins_vec = segmentData();
+    chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+    vector<tuple<string,string,int>> *empt = new vector<tuple<string,string,int>>();
+    vector<unordered_map<string,string>> sliced = {ins_vec.begin() + 1, ins_vec.end() - ins_vec.size() + range};
+
+//    vector<unordered_map<string,string>> res1 = DB->get("games", *empt);
+    DB->insert("games", sliced);
+//    vector<unordered_map<string,string>> res2 = DB->get("games", *empt);
+//    cout << res1.size() << endl;
+//    cout << res2.size() << endl;
+    chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+    std::cout << "Insertion Time = " << ms << "[µs]" << std::endl;
+
+    return int(ms);
+}
+
 bool testGet(Seq_Database* DB) { // c1, c2 = criteria
     chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -130,13 +151,13 @@ bool testGet(Seq_Database* DB) { // c1, c2 = criteria
 //    tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds3);
     vector<unordered_map<string, string>> results = DB->get("games", *conds);
 
-    for (unordered_map<string,string> x : results){
-        for(auto y : x){
-            cout << y.first << ": " << y.second << ", ";
-        }
-        cout << endl << endl;
-    }
-    cout << "Total records: " << results.size() << endl;
+//    for (unordered_map<string,string> x : results){
+//        for(auto y : x){
+//            cout << y.first << ": " << y.second << ", ";
+//        }
+//        cout << endl << endl;
+//    }
+//    cout << "Total records: " << results.size() << endl;
 
     chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Get Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
@@ -163,13 +184,13 @@ bool testGet(DP_Database* DB) { // c1, c2 = criteria
 //    tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds3);
     tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds);
 
-    for (unordered_map<string,string> x : results){
-        for(auto y : x){
-            cout << y.first << ": " << y.second << ", ";
-        }
-        cout << endl << endl;
-    }
-    cout << "Total records: " << results.size() << endl;
+//    for (unordered_map<string,string> x : results){
+//        for(auto y : x){
+//            cout << y.first << ": " << y.second << ", ";
+//        }
+//        cout << endl << endl;
+//    }
+//    cout << "Total records: " << results.size() << endl;
 
     chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Get Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
@@ -275,23 +296,39 @@ bool testRigorous(Seq_Database* DB, int iters) {
     return true;
 }
 
-int main() {
-    Seq_Database* DB = new Seq_Database(); // testing sequential
-//     DP_Database* dpDB = new DP_Database();
-    populateDB(DB);
-//     populateDB(dpDB);
+void test_insert_speeds(Seq_Database* DB, DP_Database* dpDB, int iters) {
+    vector<unordered_map<string,string>> records = getRecords(DB, 10000);
+    vector<unordered_map<string,string>> records1 = getRecords(DB, 10000);
 
-//    testGet(DB);
-
-    // ----- insert ------
-
-    int ms = 0;
-    // test random insert
-    for (int i = 0; i < 50; i++) {
-        ms += testInsert(DB, 10000);
+    for (int j = 0; j < iters; j++){
+        auto old_count = records.size();
+        records.resize(records1.size() + old_count);
+        std::copy_n(records1.begin(), records1.size(), records.begin() + old_count);
     }
 
-    cout << ms << endl;
+    chrono::steady_clock::time_point ibegin1 = std::chrono::steady_clock::now();
+    DB->insert("games", records);
+    chrono::steady_clock::time_point iend1 = std::chrono::steady_clock::now();
+    std::cout << "Sequential Insert Time = " << std::chrono::duration_cast<std::chrono::microseconds>(iend1 - ibegin1).count() << "[µs]" << std::endl;
+
+    chrono::steady_clock::time_point ibegin = std::chrono::steady_clock::now();
+    dpDB->insert("games", records);
+    chrono::steady_clock::time_point iend = std::chrono::steady_clock::now();
+    std::cout << "Parallel Insert Time = " << std::chrono::duration_cast<std::chrono::microseconds>(iend - ibegin).count() << "[µs]" << std::endl;
+}
+
+int main() {
+    Seq_Database* DB = new Seq_Database(); // testing sequential
+     DP_Database* dpDB = new DP_Database();
+     populateDB(DB);
+     populateDB(dpDB);
+
+//    testGet(DB);
+//    testGet(dpDB);
+
+    // ----- insert ------
+    // test random insert
+    test_insert_speeds(DB, dpDB, 50);
     // -------------------
 
     // ----- get ---------
