@@ -12,6 +12,7 @@
 #include "SequentialDB.cpp"
 #include <random>
 #include <tbb/tbb.h>
+#include "DataParallelDB.cpp"
 
 using namespace std;
 
@@ -74,6 +75,21 @@ int populateDB(Seq_Database* DB) {
     return ms;
 }
 
+int populateDB(DP_Database* DB) {
+    chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+    vector<string> *keys = new vector<string>(); // list keys
+    vector<unordered_map<string,string>> ins_vec = segmentData();
+    cout << "inserting" << endl;
+    DB->insert("games", ins_vec);
+
+    chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    int ms = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+    std::cout << "Populate Data Time = " << ms << "[µs]" << std::endl;
+
+    return ms;
+}
+
 int testInsert(Seq_Database* DB, int range) { // insert one record
 
     vector<string> *keys = new vector<string>(); // list keys
@@ -112,7 +128,40 @@ bool testGet(Seq_Database* DB) { // c1, c2 = criteria
     conds3->push_back(score2);
 
 //    tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds3);
-    vector<unordered_map<string, string>> results = DB->get("games", *conds3);
+    vector<unordered_map<string, string>> results = DB->get("games", *conds);
+
+    for (unordered_map<string,string> x : results){
+        for(auto y : x){
+            cout << y.first << ": " << y.second << ", ";
+        }
+        cout << endl << endl;
+    }
+    cout << "Total records: " << results.size() << endl;
+
+    chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Get Time = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+
+    return true;
+}
+
+bool testGet(DP_Database* DB) { // c1, c2 = criteria
+    chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+    tuple<string, string, int> home = make_tuple<string, string>("team_home", "New England Patriots", 0);
+    tuple<string, string, int> away = make_tuple<string, string>("team_away", "Buffalo Bills", 0);
+    tuple<string, string, int> score = make_tuple<string, string>("score_home", "14",1);
+    tuple<string, string, int> score2 = make_tuple<string, string>("score_home", "17", -1);
+    vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
+    vector<tuple<string, string, int>>* conds2 = new vector<tuple<string, string, int>>();
+    vector<tuple<string, string, int>>* conds3 = new vector<tuple<string, string, int>>();
+
+    conds->push_back(home);
+    conds2->push_back(away);
+    conds3->push_back(score);
+    conds3->push_back(score2);
+
+//    tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds3);
+    tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds);
 
     for (unordered_map<string,string> x : results){
         for(auto y : x){
@@ -142,6 +191,22 @@ bool testRemove(Seq_Database *DB, tuple<string,string, int> c1) { // singular re
     }
     return true;
 }
+
+bool testRemove(DP_Database *DB, tuple<string,string, int> c1) { // singular remove
+    vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
+    conds->push_back(c1);
+    DB->remove("games", *conds);
+    cout << "POST:" << endl;
+    tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds);
+    for (unordered_map<string,string> x : results){
+        for(auto y : x){
+            cout << y.first << ": " << y.second << ", ";
+        }
+        cout << endl << endl;
+    }
+    return true;
+}
+
 
 vector<unordered_map<string,string>> getRecords(Seq_Database* DB, int range) {
     random_device rd;
@@ -212,9 +277,9 @@ bool testRigorous(Seq_Database* DB, int iters) {
 
 int main() {
     Seq_Database* DB = new Seq_Database(); // testing sequential
-    // Seq_Database* dpDB = new Seq_Database();
+//     DP_Database* dpDB = new DP_Database();
     populateDB(DB);
-    // populateDB(dpDB);
+//     populateDB(dpDB);
 
 //    testGet(DB);
 
@@ -222,7 +287,7 @@ int main() {
 
     int ms = 0;
     // test random insert
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 50; i++) {
         ms += testInsert(DB, 10000);
     }
 
@@ -230,12 +295,12 @@ int main() {
     // -------------------
 
     // ----- get ---------
-    //testGet(DB);
+//    testGet(dpDB);
     // -------------------
 
     // ----- remove ------
-    // tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
-    // testRemove(DB, rm);
+//     tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
+//     testRemove(dpDB, rm);
     // -------------------
 
     // ----- BATCH OPS ---
