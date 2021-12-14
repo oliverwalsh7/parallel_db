@@ -72,7 +72,7 @@ class DP_Database{
         return *finalQry;
     }
 
-       int remove(string table, vector<tuple<string,string, int>> conditions){
+    int remove(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         unordered_map<string,tbb::concurrent_vector<unordered_map<string,string>>> database = *DB;
         tbb::concurrent_vector<unordered_map<string,string>>* updated_table = new tbb::concurrent_vector<unordered_map<string,string>>();
