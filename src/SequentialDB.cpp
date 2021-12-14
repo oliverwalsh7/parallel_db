@@ -56,18 +56,16 @@ class Seq_Database {
     }
 
     void insert(string table, vector<unordered_map<string,string>> records){
-        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
         try {
             DB->at(table);
         } catch (const std::out_of_range& oor) {
             vector<unordered_map<string,string>>* x = new vector<unordered_map<string,string>>();
-            database[table] = *x;
+            (*DB)[table] = *x;
             cout << "Table doesnt exist" << endl;
         }
         for(int i = 0; i < records.size(); i++){
-            database[table].push_back(records[i]);
+            (*DB)[table].push_back(records[i]);
         }
-        *DB = database;
 
     }
 
@@ -75,8 +73,7 @@ class Seq_Database {
     int remove(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         vector<unordered_map<string, string>>* toRemove = new vector<unordered_map<string, string>>();
-        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
-        for(auto it = database[table].begin(); it != database[table].end(); it++) { // for every unordered_map (record) in the vector representing "table"
+        for(auto it = (*DB)[table].begin(); it != (*DB)[table].end(); it++) { // for every unordered_map (record) in the vector representing "table"
             bool rem = true;
             for(int i = 0; i < conditions.size(); i++) { // check each condition
                 string k = std::get<0>(conditions[i]);
@@ -91,11 +88,10 @@ class Seq_Database {
             }
             if(rem) {
                 count++;
-                it = database[table].erase(it);
+                it = (*DB)[table].erase(it);
                 it--;
             }
         }
-        *DB = database;
         return count;
     } 
 
@@ -103,8 +99,7 @@ class Seq_Database {
     vector<unordered_map<string,string>> get(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         vector<unordered_map<string, string>>* finalQry = new vector<unordered_map<string, string>>();
-        unordered_map<string,vector<unordered_map<string,string>>> database = *DB;
-        for(auto x : database[table]) { // for every unordered_map (record) in the vector representing "table"
+        for(auto x : (*DB)[table]) { // for every unordered_map (record) in the vector representing "table"
             bool add = true;
             for(int i = 0; i < conditions.size(); i++) { // check each condition
                 string k = std::get<0>(conditions[i]);
