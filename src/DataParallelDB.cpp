@@ -11,12 +11,12 @@ using namespace std;
 
 class DP_Database{
     private:
-    unordered_map<string, tbb::concurrent_unordered_map<unordered_map<string,string>>>* DB;
+    unordered_map<string, tbb::concurrent_unordered_map<int, unordered_map<string,string>>>* DB;
 
     public:
 
     DP_Database(){
-        DB = new unordered_map<string, tbb::concurrent_unordered_map<unordered_map<string,string>>>();
+        DB = new unordered_map<string, tbb::concurrent_unordered_map<int, unordered_map<string,string>>>();
     }
 
     void insert(string table, vector<unordered_map<string,string>> records){
@@ -24,7 +24,7 @@ class DP_Database{
             DB->at(table);
         } catch (const std::out_of_range& oor) {
             //table does not exist, so make one
-            tbb::concurrent_unordered_map<unordered_map<string,string>>* x = new tbb::concurrent_vector<unordered_map<string,string>>();
+            tbb::concurrent_unordered_map<int, unordered_map<string,string>>* x = new tbb::concurrent_unordered_map<int, unordered_map<string,string>>();
             //database.insert(make_pair(table,*x));
             (*DB).insert(make_pair(table,*x));
         }
@@ -34,7 +34,7 @@ class DP_Database{
         {
             for (int i=r.begin(); i<r.end(); ++i)
             {
-                (*DB)[table].insert(make_pair(a+i,records[i]); // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
+                (*DB)[table].insert(make_pair(a+i,records[i])); // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
             }
         });
         // for(int i = 0; i < records.size(); i++){
