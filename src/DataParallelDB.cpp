@@ -28,14 +28,17 @@ class DP_Database{
             //database.insert(make_pair(table,*x));
             (*DB).insert(make_pair(table,*x));
         }
-        tbb::parallel_for( tbb::blocked_range<int>(0,records.size()), //Loop in parallel over all records to be inserted
-                       [&](tbb::blocked_range<int> r)
-        {
-            for (int i=r.begin(); i<r.end(); ++i)
-            {
-                (*DB)[table].push_back(records[i]); // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
-            }
-        });
+        // tbb::parallel_for( tbb::blocked_range<int>(0,records.size()), //Loop in parallel over all records to be inserted
+        //                [&](tbb::blocked_range<int> r)
+        // {
+        //     for (int i=r.begin(); i<r.end(); ++i)
+        //     {
+        //         (*DB)[table].push_back(records[i]); // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
+        //     }
+        // });
+        for(int i = 0; i < records.size(); i++){
+            (*DB)[table].push_back(records[i]);
+        }
     }
 
     tbb::concurrent_vector<unordered_map<string,string>> get(string table, vector<tuple<string,string, int>> conditions){
