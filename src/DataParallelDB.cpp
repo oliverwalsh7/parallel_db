@@ -71,5 +71,39 @@ class DP_Database{
         });
         return *finalQry;
     }
+
+       int remove(string table, vector<tuple<string,string, int>> conditions){
+        int count = 0;
+        unordered_map<string,tbb::concurrent_vector<unordered_map<string,string>>> database = *DB;
+        tbb::concurrent_vector<unordered_map<string,string>>* updated_table = new tbb::concurrent_vector<unordered_map<string,string>>();
+        tbb::parallel_for( tbb::blocked_range<int>(0,database[table].size()), //Loop in parallel over all records to be inserted
+                       [&](tbb::blocked_range<int> r)
+        {
+            for (int i=r.begin(); i<r.end(); ++i)
+            {
+             // for every unordered_map (record) in the vector representing "table"
+                bool rem = true;
+                for(int i = 0; i < conditions.size(); i++) { // check each condition
+                    string k = std::get<0>(conditions[i]);
+                    string field = database[table][i][k];
+                    if(std::get<2>(conditions[i])<0){
+                        rem = rem && (field.compare(std::get<1>(conditions[i])) < 0); 
+                    } else if(std::get<2>(conditions[i])>0){
+                        rem = rem && (field.compare(std::get<1>(conditions[i])) > 0);
+                    } else {
+                        rem = rem && (field.compare(std::get<1>(conditions[i])) == 0);
+                    }            
+                }
+                if(!rem) {
+                    count++;
+                    updated_table->push_back(database[table][i]);
+                }
+            }
+        });
+        database[table] = *updated_table;
+        *DB = database;
+        return count;
+    } 
+    
     
 };
