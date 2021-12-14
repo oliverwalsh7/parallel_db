@@ -33,6 +33,7 @@ class DP_Database{
         {
             for (int i=r.begin(); i<r.end(); ++i)
             {
+                records[i]["Valid"] = "True";
                 (*DB)[table].push_back(records[i]); // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
             }
         });
@@ -60,18 +61,18 @@ class DP_Database{
                     }
 
                 }
-                if(add) {
+                if(add && (*DB)[table][i]["Valid"].compare("True") == 0) {
                     count++;
                     finalQry->push_back((*DB)[table][i]); // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
                 } 
             }
         });
+        cout << count << endl;
         return *finalQry;
     }
 
     int remove(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
-        tbb::concurrent_vector<unordered_map<string,string>>* updated_table = new tbb::concurrent_vector<unordered_map<string,string>>();
         tbb::parallel_for( tbb::blocked_range<int>(0,(*DB)[table].size()), //Loop in parallel over all records to be inserted
                        [&](tbb::blocked_range<int> r)
         {
@@ -79,26 +80,54 @@ class DP_Database{
             {
              // for every unordered_map (record) in the vector representing "table"
                 bool rem = true;
-                for(int i = 0; i < conditions.size(); i++) { // check each condition
-                    string k = std::get<0>(conditions[i]);
+                for(int j = 0; j < conditions.size(); j++) { // check each condition
+                    string k = std::get<0>(conditions[j]);
                     string field = (*DB)[table][i][k];
-                    if(std::get<2>(conditions[i])<0){
-                        rem = rem && (field.compare(std::get<1>(conditions[i])) < 0); 
-                    } else if(std::get<2>(conditions[i])>0){
-                        rem = rem && (field.compare(std::get<1>(conditions[i])) > 0);
+                    if(std::get<2>(conditions[j])<0){
+                        rem = rem && (field.compare(std::get<1>(conditions[j])) < 0); 
+                    } else if(std::get<2>(conditions[j])>0){
+                        rem = rem && (field.compare(std::get<1>(conditions[j])) > 0);
                     } else {
-                        rem = rem && (field.compare(std::get<1>(conditions[i])) == 0);
+                        rem = rem && (field.compare(std::get<1>(conditions[j])) == 0);
                     }            
                 }
-                if(!rem) {
+                if(rem) {
                     count++;
-                    updated_table->push_back((*DB)[table][i]);
+                    (*DB)[table][i]["Valid"] = "False";
                 }
             }
         });
-        (*DB)[table].swap(*updated_table);
         return count;
     } 
-    
+
+    void cleanTable(string table){
+        tbb::concurrent_vector<unordered_map<string, string>>* newTable = new tbb::concurrent_vector<unordered_map<string, string>>();
+        for(int i = 0; i < (*DB)[table].size(); i++){
+            if((*DB)[table][i]["Valid"].compare("True") == 0){
+                newTable->push_back((*DB)[table][i]);
+            }
+        }
+        (*DB)[table]=move(*newTable);
+    }
+
+    void printDB(){
+        cout << "print all the rows in DB" << endl;
+        cout << (*DB).size() << endl;
+        int count = 0;
+        for(auto x : (*DB)){ // outer loop of tables
+            cout << x.second.size() << endl;
+            //cout << x.second.bucket_count();
+            for(auto y : x.second){ // middle loop of records
+                for(auto z : y){ // inner loop of fields
+                    cout << z.second << " ";
+                }
+                if(y["Valid"].compare("False") == 0){
+                    count++;
+                }
+                cout << endl<< endl;
+            }
+        }
+        cout << count << endl;
+    }
     
 };

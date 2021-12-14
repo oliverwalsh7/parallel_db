@@ -216,8 +216,8 @@ bool testRemove(Seq_Database *DB, tuple<string,string, int> c1) { // singular re
 bool testRemove(DP_Database *DB, tuple<string,string, int> c1) { // singular remove
     vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
     conds->push_back(c1);
-    DB->remove("games", *conds);
-    cout << "POST:" << endl;
+    int r = DB->remove("games", *conds);
+    cout << "POST:"<< r << endl;
     tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds);
     for (unordered_map<string,string> x : results){
         for(auto y : x){
@@ -357,13 +357,19 @@ int main() {
     // -------------------
 
     // ----- remove ------
-//     tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
-//     testRemove(dpDB, rm);
+    // tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
+    // testRemove(dpDB, rm);
     // -------------------
 
     // ----- BATCH OPS ---
 //     testRigorous(DB, 50);
     // -------------------
+
+    // ---- Test Clean ----
+    tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
+    testRemove(dpDB, rm);
+    dpDB->cleanTable("games");
+    dpDB->printDB();
 
     exit(EXIT_SUCCESS);
 }
