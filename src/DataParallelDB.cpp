@@ -11,12 +11,12 @@ using namespace std;
 
 class DP_Database{
     private:
-    unordered_map<string, tbb::concurrent_unordered_map<int, unordered_map<string,string>>>* DB;
+    unordered_map<string, tbb::concurrent_vector<unordered_map<string,string>>>* DB;
 
     public:
 
     DP_Database(){
-        DB = new unordered_map<string, tbb::concurrent_unordered_map<int, unordered_map<string,string>>>();
+        DB = new unordered_map<string, tbb::concurrent_vector<unordered_map<string,string>>>();
     }
 
     void insert(string table, vector<unordered_map<string,string>> records){
@@ -24,24 +24,20 @@ class DP_Database{
             DB->at(table);
         } catch (const std::out_of_range& oor) {
             //table does not exist, so make one
-            tbb::concurrent_unordered_map<int, unordered_map<string,string>>* x = new tbb::concurrent_unordered_map<int, unordered_map<string,string>>();
+            tbb::concurrent_vector<unordered_map<string,string>>* x = new tbb::concurrent_vector<unordered_map<string,string>>();
             //database.insert(make_pair(table,*x));
             (*DB).insert(make_pair(table,*x));
         }
-        int a = (*DB)[table].size();
         tbb::parallel_for( tbb::blocked_range<int>(0,records.size()), //Loop in parallel over all records to be inserted
                        [&](tbb::blocked_range<int> r)
         {
             for (int i=r.begin(); i<r.end(); ++i)
             {
-                (*DB)[table].insert(make_pair(a+i,records[i])); // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
+                (*DB)[table].push_back(records[i]); // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
             }
         });
-        // for(int i = 0; i < records.size(); i++){
-        //     (*DB)[table].push_back(records[i]);
-        // }
     }
-    /*
+
     tbb::concurrent_vector<unordered_map<string,string>> get(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         tbb::concurrent_vector<unordered_map<string, string>>* finalQry = new tbb::concurrent_vector<unordered_map<string, string>>();
@@ -76,7 +72,7 @@ class DP_Database{
     int remove(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         tbb::concurrent_vector<unordered_map<string,string>>* updated_table = new tbb::concurrent_vector<unordered_map<string,string>>();
-        tbb::parallel_for( tbb::blocked_range<int>(0,(*DB)[table].size()), //Loop in parallel over all records to be inserted
+        tbb::parallel_for( tbb::blocked_range<int>(0,database[table].size()), //Loop in parallel over all records to be inserted
                        [&](tbb::blocked_range<int> r)
         {
             for (int i=r.begin(); i<r.end(); ++i)
@@ -102,7 +98,7 @@ class DP_Database{
         });
         (*DB)[table] = *updated_table;
         return count;
-    } */
+    } 
     
     
 };
