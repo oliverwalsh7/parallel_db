@@ -75,7 +75,7 @@ class DP_Database{
     int remove(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         tbb::concurrent_vector<unordered_map<string,string>>* updated_table = new tbb::concurrent_vector<unordered_map<string,string>>();
-        tbb::parallel_for( tbb::blocked_range<int>(0,database[table].size()), //Loop in parallel over all records to be inserted
+        tbb::parallel_for( tbb::blocked_range<int>(0,(*DB)[table].size()), //Loop in parallel over all records to be inserted
                        [&](tbb::blocked_range<int> r)
         {
             for (int i=r.begin(); i<r.end(); ++i)
