@@ -89,7 +89,6 @@ class DP_Database{
                 } 
             }
         });
-        cout << count << endl;
         return *finalQry;
     }
 
