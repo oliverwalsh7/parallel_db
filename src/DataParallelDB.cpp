@@ -39,6 +39,28 @@ class DP_Database{
         });
     }
 
+    void insertV2(string table, vector<unordered_map<string,string>> records){
+        try {
+            DB->at(table);
+        } catch (const std::out_of_range& oor) {
+            //table does not exist, so make one
+            tbb::concurrent_vector<unordered_map<string,string>>* x = new tbb::concurrent_vector<unordered_map<string,string>>();
+            //database.insert(make_pair(table,*x));
+            (*DB).insert(make_pair(table,*x));
+        }
+        int old_size = (*DB)[table].size();
+        (*DB)[table].grow_to_at_least(old_size+records.size());
+        tbb::parallel_for( tbb::blocked_range<int>(0,records.size()), //Loop in parallel over all records to be inserted
+                       [&](tbb::blocked_range<int> r)
+        {
+            for (int i=r.begin(); i<r.end(); ++i)
+            {
+                records[i]["Valid"] = "True";
+                (*DB)[table][old_size+i] = records[i]; // concurrently append to vector. tbb::concurrent vector is safe for resizes and appends operations
+            }
+        });
+    }
+
     tbb::concurrent_vector<unordered_map<string,string>> get(string table, vector<tuple<string,string, int>> conditions){
         int count = 0;
         tbb::concurrent_vector<unordered_map<string, string>>* finalQry = new tbb::concurrent_vector<unordered_map<string, string>>();
