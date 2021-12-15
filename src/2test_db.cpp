@@ -19,7 +19,7 @@ using namespace std;
 vector<unordered_map<string,string>> segmentData() {
     chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-    std::ifstream file("../data/nfl-1.csv"); // import csv
+    std::ifstream file("../data/nfl-0.csv"); // import csv
     vector<string> games; // vec of games
     string s = ""; // for tracking label rows
     char delim = '\n'; // delimiter by newline
@@ -216,8 +216,8 @@ bool testRemove(Seq_Database *DB, tuple<string,string, int> c1) { // singular re
 bool testRemove(DP_Database *DB, tuple<string,string, int> c1) { // singular remove
     vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
     conds->push_back(c1);
-    DB->remove("games", *conds);
-    cout << "POST:" << endl;
+    int r = DB->remove("games", *conds);
+    cout << "POST:"<< r << endl;
     tbb::concurrent_vector<unordered_map<string, string>> results = DB->get("games", *conds);
     for (unordered_map<string,string> x : results){
         for(auto y : x){
@@ -311,7 +311,7 @@ void test_insert_speeds(Seq_Database* DB, DP_Database* dpDB, int iters) {
     std::cout << "Sequential Insert Time = " << std::chrono::duration_cast<std::chrono::microseconds>(iend1 - ibegin1).count() << "[µs]" << std::endl;
 
     chrono::steady_clock::time_point ibegin = std::chrono::steady_clock::now();
-    dpDB->insertV2("games", records);
+    dpDB->insert("games", records);
     chrono::steady_clock::time_point iend = std::chrono::steady_clock::now();
     std::cout << "Parallel Insert Time = " << std::chrono::duration_cast<std::chrono::microseconds>(iend - ibegin).count() << "[µs]" << std::endl;
 }
@@ -319,17 +319,12 @@ void test_insert_speeds(Seq_Database* DB, DP_Database* dpDB, int iters) {
 void test_get_speeds(Seq_Database* DB, DP_Database* dpDB) {
     tuple<string, string, int> home = make_tuple<string, string>("team_away", "New England Patriots", 0);
     tuple<string, string, int> score = make_tuple<string, string>("score_home", "14",1);
-    tuple<string, string, int> stadium = make_tuple<string, string>("stadium", "Mile High", 0);
-    tuple<string, string, int> playoffs = make_tuple<string, string>("schedule_playoff", "FALSE", 0);
-    tuple<string, string, int> w_detail = make_tuple<string, string>("weather_detail", "72", -1);
-
+    tuple<string, string, int> stadium = make_tuple<string, string>("stadium", "Mile High", -1);
     vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
 
     conds->push_back(home);
     conds->push_back(score);
     conds->push_back(stadium);
-    conds->push_back(playoffs);
-    conds->push_back(w_detail);
 
     chrono::steady_clock::time_point ibegin1 = std::chrono::steady_clock::now();
     DB->get("games", *conds);
@@ -340,33 +335,6 @@ void test_get_speeds(Seq_Database* DB, DP_Database* dpDB) {
     dpDB->get("games", *conds);
     chrono::steady_clock::time_point iend = std::chrono::steady_clock::now();
     std::cout << "Parallel GET Time = " << std::chrono::duration_cast<std::chrono::microseconds>(iend - ibegin).count() << "[µs]" << std::endl;
-}
-
-void test_remove_speeds(Seq_Database* DB, DP_Database* dpDB){
-    tuple<string, string, int> home = make_tuple<string, string>("team_away", "New England Patriots", 0);
-    tuple<string, string, int> score = make_tuple<string, string>("score_home", "14",1);
-    tuple<string, string, int> stadium = make_tuple<string, string>("stadium", "Mile High", 0);
-    tuple<string, string, int> playoffs = make_tuple<string, string>("schedule_playoff", "FALSE", 0);
-    tuple<string, string, int> w_detail = make_tuple<string, string>("weather_detail", "72", -1);
-
-    vector<tuple<string, string, int>>* conds = new vector<tuple<string, string, int>>();
-
-    conds->push_back(home);
-    conds->push_back(score);
-    conds->push_back(stadium);
-    conds->push_back(playoffs);
-    conds->push_back(w_detail);
-
-    chrono::steady_clock::time_point ibegin1 = std::chrono::steady_clock::now();
-    DB->remove("games", *conds);
-    chrono::steady_clock::time_point iend1 = std::chrono::steady_clock::now();
-    std::cout << "Sequential REMOVE Time = " << std::chrono::duration_cast<std::chrono::microseconds>(iend1 - ibegin1).count() << "[µs]" << std::endl;
-
-    chrono::steady_clock::time_point ibegin = std::chrono::steady_clock::now();
-    dpDB->remove("games", *conds);
-    chrono::steady_clock::time_point iend = std::chrono::steady_clock::now();
-    std::cout << "Parallel REMOVE Time = " << std::chrono::duration_cast<std::chrono::microseconds>(iend - ibegin).count() << "[µs]" << std::endl;
-
 }
 
 int main() {
@@ -380,24 +348,28 @@ int main() {
 
     // ----- insert ------
     // test random insert
-    test_insert_speeds(DB, dpDB, 50);
+//    test_insert_speeds(DB, dpDB, 50);
     // -------------------
 
     // ----- get ---------
 //    testGet(dpDB);
-//     test_get_speeds(DB, dpDB);
+     test_get_speeds(DB, dpDB);
     // -------------------
 
     // ----- remove ------
-//     tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
-//     testRemove(dpDB, rm);
-//     test_remove_speeds(DB, dpDB);
-
+    // tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
+    // testRemove(dpDB, rm);
     // -------------------
 
     // ----- BATCH OPS ---
 //     testRigorous(DB, 50);
     // -------------------
+
+    // ---- Test Clean ----
+    tuple<string, string, int> rm = make_tuple<string, string, int>("team_home", "New England Patriots", 0);
+    testRemove(dpDB, rm);
+    dpDB->cleanTable("games");
+    dpDB->printDB();
 
     exit(EXIT_SUCCESS);
 }
